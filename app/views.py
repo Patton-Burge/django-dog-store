@@ -35,15 +35,14 @@ def purchase_detail(request, id):
 
 
 def new_dog_tag(request):
-    if request.method == "post":
-        new_tag = DogTag.dogtag_set.create(
-            owner_name=request.owner_name,
-            dog_name=request.dog_name,
-            dog_birthday=request.dog_birthday,
+    if request.method == "POST":
+        new_tag = DogTag.objects.create(
+            owner_name="Dixie", dog_name="REEEEE",dog_birthday="2019/11/15"
         )
         new_tag.save()
-    return render(request, "new_dog_tag.html")
-
+        return redirect(request, "dog_tag_list.html")
+    else:
+        return render(request, "new_dog_tag.html")
 
 def dog_tag_list(request):
     dog_tags = DogTag.objects.all()
