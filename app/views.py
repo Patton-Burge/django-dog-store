@@ -2,8 +2,7 @@ from django.shortcuts import render,redirect
 from app.models import DogProduct, DogTag, Purchase
 from datetime import datetime
 from django.contrib import messages
-
-
+from app.forms import NewDogTagForm
 def home(request):
     dog_products = DogProduct.objects.all()
     return render(request, "home.html", {"dog_products": dog_products})
@@ -17,30 +16,31 @@ def purchase_dog_product(request, id):
     dog_product = DogProduct.objects.get(id=id)
     if dog_product.quantity > 0:
         dog_product.quantity -= 1
+        purchased = dog_product.purchase_set.create(purchased_at=datetime.now())
+        messages.success(request, f"Purchased {dog_product.name}")
         dog_product.save()
-        new_purchase = dog_product.purchase_set.create(
-            dog_product=dog_product.name, purchased_at=datetime.now()
-        )
-        messages.success(request, f"Purchased {new_purchase.dog_product}")
-        new_purchase.save()
-        return render(request, "purchase_detail.html", {"purchase": new_purchase})
+        return redirect("purchase_detail", purchased.id)
     else:
-        dog_product.quantity == 0
-        messages.success(request, f"{dog_product.name} is out of stock")
-        return redirect('dog_product_detail', dog_product.id)
+        messages.error(request, f"{dog_product.name} is out of stock")
+        return redirect("dog_product_detail", dog_product.id)
 
 
 def purchase_detail(request, id):
-    pass
+    purchase = Purchase.objects.get(id=id)
+    return render(request, "purchase_detail.html", {"purchase": purchase})
 
 
 def new_dog_tag(request):
-    if request.method == "POST":
-        new_tag = DogTag.objects.create(
-            owner_name="Dixie", dog_name="REEEEE",dog_birthday="2019/11/15"
+    form = NewDogTagForm(request.POST)
+    if form.is_valid():
+        owner_name = request.POST["owner_name"]
+        dog_name = request.POST["dog_name"]
+        dog_birthday = request.POST["dog_birthday"]
+        tag = DogTag.objects.create(
+            owner_name=owner_name, dog_name=dog_name, dog_birthday=dog_birthday
         )
-        new_tag.save()
-        return redirect(request, "dog_tag_list.html")
+        tag.save()
+        return redirect("dog_tag_list")
     else:
         return render(request, "new_dog_tag.html")
 
